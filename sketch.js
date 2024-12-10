@@ -1,5 +1,5 @@
 let video;
-let poseNet;
+let bodyPose;
 let pose;
 let skeleton;
 
@@ -8,22 +8,22 @@ function setup() {
     video = createCapture(VIDEO);
     video.hide();
     
-    // Initialize poseNet
-    poseNet = ml5.poseNet(video, modelLoaded);
-    poseNet.on('pose', gotPoses);
+    // Initialize BodyPose
+    bodyPose = ml5.bodyPose(video, modelLoaded);
+    bodyPose.on('pose', gotPoses);
     
     console.log('ml5 version:', ml5.version);
 }
 
-function gotPoses(poses) {
-    if (poses.length > 0) {
-        pose = poses[0].pose;
-        skeleton = poses[0].skeleton;
+function gotPoses(results) {
+    if (results.length > 0) {
+        pose = results[0];
+        skeleton = results[0].skeleton;
     }
 }
 
 function modelLoaded() {
-    console.log('PoseNet Model Loaded!');
+    console.log('BodyPose Model Loaded!');
 }
 
 function draw() {
@@ -41,17 +41,19 @@ function draw() {
             if (keypoint.score > 0.2) {
                 fill(255, 0, 0);
                 noStroke();
-                ellipse(width - keypoint.position.x, keypoint.position.y, 10, 10);
+                ellipse(width - keypoint.x, keypoint.y, 10, 10);
             }
         }
         
         // Draw skeleton
-        for (let bone of skeleton) {
-            let start = bone[0].position;
-            let end = bone[1].position;
-            stroke(255, 0, 0);
-            strokeWeight(2);
-            line(width - start.x, start.y, width - end.x, end.y);
+        if (skeleton) {
+            for (let bone of skeleton) {
+                let start = bone[0];
+                let end = bone[1];
+                stroke(255, 0, 0);
+                strokeWeight(2);
+                line(width - start.x, start.y, width - end.x, end.y);
+            }
         }
     }
     
