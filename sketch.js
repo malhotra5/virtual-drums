@@ -126,7 +126,7 @@ function draw() {
         }
 
         // Draw left hand
-        let color = leftCooldown > 0 ? color = [255, 165, 0] : [255, 0, 0]; // Orange during cooldown, else red
+        let color = leftCooldown > 0 ? [255, 165, 0] : [255, 0, 0]; // Orange during cooldown, else red
         stroke(...color);
         fill(...color);
         circle(hands.left.x, hands.left.y, 20);
