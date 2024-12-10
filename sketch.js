@@ -112,10 +112,18 @@ function detectSideways(handHistory, isRight) {
   let prevX = handHistory[handHistory.length - 2].x;
   let velocity = currentX - prevX;
   
+  // Debug velocity
+  console.log(`${isRight ? 'Right' : 'Left'} hand sideways velocity:`, velocity);
+  
+  // Adjust threshold for sideways movement (might need to be more sensitive)
+  const sidewaysThreshold = 10;  // Slightly more sensitive than vertical hits
+  
   // For right hand, check if moving right. For left hand, check if moving left
-  return isRight ? 
-    velocity > hitThreshold :  // Right hand moving right
-    velocity < -hitThreshold;  // Left hand moving left
+  if (isRight) {
+    return velocity > sidewaysThreshold;  // Right hand moving right
+  } else {
+    return velocity < -sidewaysThreshold;  // Left hand moving left
+  }
 }
 
 function updateHandHistory(hand, history) {
@@ -165,11 +173,13 @@ function draw() {
         fill(...color);
         circle(hands.left.x, hands.left.y, 20);
         
-        // Draw velocity indicator
+        // Draw velocity indicators
         if (leftHandHistory.length >= 2) {
-          let velocity = hands.left.y - leftHandHistory[leftHandHistory.length - 2].y;
+          let vVelocity = hands.left.y - leftHandHistory[leftHandHistory.length - 2].y;
+          let hVelocity = hands.left.x - leftHandHistory[leftHandHistory.length - 2].x;
           textSize(12);
-          text('v: ' + Math.round(velocity), hands.left.x + 25, hands.left.y);
+          text('vert: ' + Math.round(vVelocity), hands.left.x + 25, hands.left.y);
+          text('horz: ' + Math.round(hVelocity), hands.left.x + 25, hands.left.y + 15);
         }
       }
       
@@ -196,11 +206,13 @@ function draw() {
         fill(...color);
         circle(hands.right.x, hands.right.y, 20);
         
-        // Draw velocity indicator
+        // Draw velocity indicators
         if (rightHandHistory.length >= 2) {
-          let velocity = hands.right.y - rightHandHistory[rightHandHistory.length - 2].y;
+          let vVelocity = hands.right.y - rightHandHistory[rightHandHistory.length - 2].y;
+          let hVelocity = hands.right.x - rightHandHistory[rightHandHistory.length - 2].x;
           textSize(12);
-          text('v: ' + Math.round(velocity), hands.right.x + 25, hands.right.y);
+          text('vert: ' + Math.round(vVelocity), hands.right.x + 25, hands.right.y);
+          text('horz: ' + Math.round(hVelocity), hands.right.x + 25, hands.right.y + 15);
         }
       }
     }
