@@ -3,6 +3,15 @@ let bodyPose;
 let poses = [];
 let connections;
 
+// Motion tracking variables
+let leftHandHistory = [];
+let rightHandHistory = [];
+const historyLength = 5;  // Number of frames to keep in history
+const hitThreshold = 15;  // Minimum y-velocity for a hit
+const hitCooldown = 10;   // Frames to wait before detecting another hit
+let leftCooldown = 0;     // Cooldown counter for left hand
+let rightCooldown = 0;    // Cooldown counter for right hand
+
 function preload() {
   // Load the bodyPose model
   bodyPose = ml5.bodyPose();
@@ -71,34 +80,105 @@ function getHandPositions(pose) {
   };
 }
 
+function detectHit(handHistory) {
+  if (handHistory.length < historyLength) return false;
+  
+  // Calculate vertical velocity (positive is downward)
+  let currentY = handHistory[handHistory.length - 1].y;
+  let prevY = handHistory[handHistory.length - 2].y;
+  let velocity = currentY - prevY;
+  
+  // Check if moving downward fast enough
+  return velocity > hitThreshold;
+}
+
+function updateHandHistory(hand, history) {
+  if (hand) {
+    history.push({ x: hand.x, y: hand.y, confidence: hand.confidence });
+    if (history.length > historyLength) {
+      history.shift(); // Remove oldest entry
+    }
+  } else {
+    history.length = 0; // Clear history if hand not detected
+  }
+}
+
 function draw() {
   // Draw the video
   image(video, 0, 0, width, height);
+
+  // Update cooldown timers
+  if (leftCooldown > 0) leftCooldown--;
+  if (rightCooldown > 0) rightCooldown--;
 
   // Process each pose
   for (let pose of poses) {
     const hands = getHandPositions(pose);
     
     if (hands) {
-      // Draw left hand average position
+      // Process left hand
       if (hands.left) {
-        stroke(255, 0, 0);  // Red for left hand
-        fill(255, 0, 0);
+        // Update history and check for hits
+        updateHandHistory(hands.left, leftHandHistory);
+        if (leftCooldown === 0 && detectHit(leftHandHistory)) {
+          console.log('Left hand hit!');
+          leftCooldown = hitCooldown;
+        }
+
+        // Draw left hand
+        let color = leftCooldown > 0 ? color = [255, 165, 0] : [255, 0, 0]; // Orange during cooldown, else red
+        stroke(...color);
+        fill(...color);
         circle(hands.left.x, hands.left.y, 20);
-        // Show confidence
-        textSize(12);
-        text(Math.round(hands.left.confidence * 100) + '%', hands.left.x + 15, hands.left.y);
+        
+        // Draw velocity indicator
+        if (leftHandHistory.length >= 2) {
+          let velocity = hands.left.y - leftHandHistory[leftHandHistory.length - 2].y;
+          textSize(12);
+          text('v: ' + Math.round(velocity), hands.left.x + 25, hands.left.y);
+        }
       }
       
-      // Draw right hand average position
+      // Process right hand
       if (hands.right) {
-        stroke(0, 255, 0);  // Green for right hand
-        fill(0, 255, 0);
+        // Update history and check for hits
+        updateHandHistory(hands.right, rightHandHistory);
+        if (rightCooldown === 0 && detectHit(rightHandHistory)) {
+          console.log('Right hand hit!');
+          rightCooldown = hitCooldown;
+        }
+
+        // Draw right hand
+        let color = rightCooldown > 0 ? [255, 165, 0] : [0, 255, 0]; // Orange during cooldown, else green
+        stroke(...color);
+        fill(...color);
         circle(hands.right.x, hands.right.y, 20);
-        // Show confidence
-        textSize(12);
-        text(Math.round(hands.right.confidence * 100) + '%', hands.right.x + 15, hands.right.y);
+        
+        // Draw velocity indicator
+        if (rightHandHistory.length >= 2) {
+          let velocity = hands.right.y - rightHandHistory[rightHandHistory.length - 2].y;
+          textSize(12);
+          text('v: ' + Math.round(velocity), hands.right.x + 25, hands.right.y);
+        }
       }
     }
   }
+  
+  // Debug: draw motion trails
+  stroke(255, 255, 255, 100);
+  noFill();
+  
+  // Left hand trail
+  beginShape();
+  for (let p of leftHandHistory) {
+    vertex(p.x, p.y);
+  }
+  endShape();
+  
+  // Right hand trail
+  beginShape();
+  for (let p of rightHandHistory) {
+    vertex(p.x, p.y);
+  }
+  endShape();
 }
