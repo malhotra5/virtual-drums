@@ -2,26 +2,26 @@ let video;
 let bodyPose;
 let pose;
 let skeleton;
-let isModelReady = false;
 
-async function setup() {
+function setup() {
     createCanvas(640, 480);
-    video = createCapture(VIDEO);
+    video = createCapture(VIDEO, videoReady);
     video.hide();
-    
-    // Initialize BodyPose
-    try {
-        bodyPose = await ml5.bodyPose(video, { modelType: 'MoveNet' });
-        modelLoaded();
-    } catch (error) {
-        console.error('Error loading model:', error);
-    }
-    
     console.log('ml5 version:', ml5.version);
 }
 
-function gotPoses(results) {
-    if (results.length > 0) {
+function videoReady() {
+    console.log('Video is ready');
+    // Initialize BodyPose only after video is ready
+    bodyPose = ml5.bodyPose(video, modelLoaded);
+}
+
+function gotPoses(error, results) {
+    if (error) {
+        console.error(error);
+        return;
+    }
+    if (results && results.length > 0) {
         pose = results[0];
         skeleton = results[0].skeleton;
     }
@@ -29,7 +29,10 @@ function gotPoses(results) {
 
 function modelLoaded() {
     console.log('BodyPose Model Loaded!');
-    isModelReady = true;
+    // Start detecting poses once the model is loaded
+    if (bodyPose) {
+        bodyPose.detect(video, gotPoses);
+    }
 }
 
 function draw() {
@@ -40,8 +43,8 @@ function draw() {
     image(video, 0, 0, width, height);
     pop();
     
-    // Keep detecting poses in each frame if model is ready
-    if (isModelReady && bodyPose) {
+    // Keep detecting poses in each frame
+    if (bodyPose) {
         bodyPose.detect(video, gotPoses);
     }
     
