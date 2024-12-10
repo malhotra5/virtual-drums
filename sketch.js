@@ -23,7 +23,7 @@ function gotPoses(results) {
 
 function modelLoaded() {
     console.log('BodyPose Model Loaded!');
-    bodyPose.detect(gotPoses);
+    bodyPose.detect(video, gotPoses);
 }
 
 function draw() {
@@ -35,7 +35,7 @@ function draw() {
     pop();
     
     // Keep detecting poses in each frame
-    bodyPose.detect(gotPoses);
+    bodyPose.detect(video, gotPoses);
     
     // Draw keypoints and skeleton if pose is detected
     if (pose) {
