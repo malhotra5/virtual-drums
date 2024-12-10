@@ -29,8 +29,8 @@ function gotPoses(results) {
 function getHandPositions(pose) {
   if (!pose) return null;
 
-  const leftHandPoints = [16, 18, 20, 22]; // Left wrist and hand points
-  const rightHandPoints = [15, 17, 19, 21]; // Right wrist and hand points
+  const leftHandPoints = [10, 8]; // Left wrist and hand points
+  const rightHandPoints = [9, 7]; // Right wrist and hand points
   
   let leftTotal = { x: 0, y: 0, count: 0 };
   let rightTotal = { x: 0, y: 0, count: 0 };
