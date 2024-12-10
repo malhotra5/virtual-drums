@@ -6,6 +6,8 @@ let connections;
 // Sound variables
 let hihatSound;
 let snareSound;
+let cymbalSound;  // For left sideways
+let tomSound;     // For right sideways
 
 // Motion tracking variables
 let leftHandHistory = [];
@@ -23,6 +25,8 @@ function preload() {
   // Load the drum sounds
   hihatSound = loadSound('sounds/hihat.wav');
   snareSound = loadSound('sounds/snare.wav');
+  cymbalSound = loadSound('sounds/cymbal.wav');
+  tomSound = loadSound('sounds/tom.wav');
 }
 
 function setup() {
@@ -100,6 +104,20 @@ function detectHit(handHistory) {
   return velocity > hitThreshold;
 }
 
+function detectSideways(handHistory, isRight) {
+  if (handHistory.length < historyLength) return false;
+  
+  // Calculate horizontal velocity (positive is rightward)
+  let currentX = handHistory[handHistory.length - 1].x;
+  let prevX = handHistory[handHistory.length - 2].x;
+  let velocity = currentX - prevX;
+  
+  // For right hand, check if moving right. For left hand, check if moving left
+  return isRight ? 
+    velocity > hitThreshold :  // Right hand moving right
+    velocity < -hitThreshold;  // Left hand moving left
+}
+
 function updateHandHistory(hand, history) {
   if (hand) {
     history.push({ x: hand.x, y: hand.y, confidence: hand.confidence });
@@ -128,10 +146,17 @@ function draw() {
       if (hands.left) {
         // Update history and check for hits
         updateHandHistory(hands.left, leftHandHistory);
-        if (leftCooldown === 0 && detectHit(leftHandHistory)) {
-          console.log('Left hand hit!');
-          leftCooldown = hitCooldown;
-          hihatSound.play(); // Play hi-hat for left hand
+        // Check for vertical hit
+        if (leftCooldown === 0) {
+          if (detectHit(leftHandHistory)) {
+            console.log('Left hand hit!');
+            leftCooldown = hitCooldown;
+            hihatSound.play(); // Play hi-hat for left hand
+          } else if (detectSideways(leftHandHistory, false)) {
+            console.log('Left hand sideways!');
+            leftCooldown = hitCooldown;
+            cymbalSound.play(); // Play cymbal for left sideways
+          }
         }
 
         // Draw left hand
@@ -152,10 +177,17 @@ function draw() {
       if (hands.right) {
         // Update history and check for hits
         updateHandHistory(hands.right, rightHandHistory);
-        if (rightCooldown === 0 && detectHit(rightHandHistory)) {
-          console.log('Right hand hit!');
-          rightCooldown = hitCooldown;
-          snareSound.play(); // Play snare for right hand
+        // Check for vertical hit or sideways movement
+        if (rightCooldown === 0) {
+          if (detectHit(rightHandHistory)) {
+            console.log('Right hand hit!');
+            rightCooldown = hitCooldown;
+            snareSound.play(); // Play snare for right hand
+          } else if (detectSideways(rightHandHistory, true)) {
+            console.log('Right hand sideways!');
+            rightCooldown = hitCooldown;
+            tomSound.play(); // Play tom for right sideways
+          }
         }
 
         // Draw right hand
