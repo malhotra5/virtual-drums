@@ -3,6 +3,10 @@ let bodyPose;
 let poses = [];
 let connections;
 
+// Sound variables
+let hihatSound;
+let snareSound;
+
 // Motion tracking variables
 let leftHandHistory = [];
 let rightHandHistory = [];
@@ -15,6 +19,10 @@ let rightCooldown = 0;    // Cooldown counter for right hand
 function preload() {
   // Load the bodyPose model
   bodyPose = ml5.bodyPose();
+  
+  // Load the drum sounds
+  hihatSound = loadSound('sounds/hihat.wav');
+  snareSound = loadSound('sounds/snare.wav');
 }
 
 function setup() {
@@ -123,6 +131,7 @@ function draw() {
         if (leftCooldown === 0 && detectHit(leftHandHistory)) {
           console.log('Left hand hit!');
           leftCooldown = hitCooldown;
+          hihatSound.play(); // Play hi-hat for left hand
         }
 
         // Draw left hand
@@ -146,6 +155,7 @@ function draw() {
         if (rightCooldown === 0 && detectHit(rightHandHistory)) {
           console.log('Right hand hit!');
           rightCooldown = hitCooldown;
+          snareSound.play(); // Play snare for right hand
         }
 
         // Draw right hand
